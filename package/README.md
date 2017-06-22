@@ -1,106 +1,61 @@
-# react-hydrate
-Asynchronous data fetching in React SSR environments.
-
-**Proof of concept:** working on a new personal site and boilerplate [over here](https://github.com/estrattonbailey/root/blob/master/server/router.js).
+# react-hydrate-link
+An extension for react-router v4 projects that prefetches data for the next view before completing navigation. Requires [react-hydrate](https://github.com/estrattonbailey/react-hydrate).
 
 [![js-standard-style](https://cdn.rawgit.com/feross/standard/master/badge.svg)](http://standardjs.com)
 
 ## Purpose
-This libary does one thing: fetches all the data needed for a given view so that the app can render a complete page on a cold load. Then, when the app boots up (assuming javascript is enabled), `react-hydrate` can hydrate the rendered components to prevent *re-fetching* of the data.
-
-As subsequent components render – say after a route change - `react-hydrate` simply passes a loading prop so that you can configure a loader for each view.
+Skeleton UI is great, but sometimes you need to wait to render a new view until all your data is available. react-router v4 made this slightly harder, as you can see [in this issue thread](https://github.com/ReactTraining/react-router/issues/4407#issuecomment-281819336). This library attempts to merge the co-located data (with `react-hydrate`, in this case) *and* the awesome dynamic routing we have with RRv4.
 
 ## Usage
+Assumming a `react-hydrate` setup consistent with that outlined in that library's README, when clicking the `Link` to the About page, the actual navigation will not occur until the data has resolved within the `hydrate()` connector that wraps the `About` component.
 ```javascript
-/**
- * index.js
- * 
- * Wrap root node with Tap context
- * provider. Hydrate state from wherever
- * state was stored on window during SSR.
- */
-import App from './App.js'
-import { Tap } from 'react-hydrate'
-
-const Root = props => (
-  <Tap initialState={window.__state || null}>
-    <App />
-  </Tap>
-)
-
-render(
-  <Root />,
-  document.getElementById('root')
-)
+import Link from 'react-hydrate-link'
 
 /**
- * App.js
- *
- * On first load, this component will
- * already have it's `title` prop available
- * to it because it was hydrated on the server.
- * 
- * If this component was rendered after the
- * initial load – like on a route change –
- * it will show 'Loading...' until the loading
- * function resolves with data.
+ * About.js
  */
-const App = ({ loading, title }) => (
-  <h1>{loading ? 'Loading...' : title}</h1>
-)
+import { hydrate } from 'react-hydrate'
 
 export default hydrate(
-  props => {
-    /* hit an API, process data */
-    return { someOtherProp: 'Hello world!' }
-  },
+  props => new Promise((resolve, reject) => {
+    setTimeout(() => {
+      resolve({
+        about: 'This is the about page. This data was loaded asynchronously.'
+      })
+    }, 1000)
+  }),
   state => ({
-    title: state.someOtherProp
+    description: state.about
   })
-)(App)
+)(({ loading, description }) => (
+  <div>
+    <h1>About</h1>
+    <p>{loading ? 'Loading description...' : description}
+  </div>
+))
 
 /**
- * server.js
- *
- * Wrap root node with Tap context provider.
- *
- * After the initial render, the `store`
- * export from the main package contains
- * all the component's loaders. Calling
- * `store.fetch()` returns a promise that resolves
- * to the fetched data.
- * 
- * `store.state` then contains the data needed
- * to hydrate the application. Attach it to the window
- * where needed.
+ * Home.js
  */
-import { renderToString } from 'react-dom'
-import { Tap, store } from 'react-hydrate'
-import App from './App.js'
+export default props => (
+  <div>
+    <h1>Home</h1>
+    <p>This is the home page. This data was loaded synchronously.</p>
+  </div>
+)
 
-app.use((req, res) => {
-  const content = renderToString(
-    <Tap>
-      <App />
-    </Tap>
-  )
+/**
+ * index.js
+ */
+export default props => (
+  <nav>
+    <Link to="/home">Home</Link>
+    <Link to="/about">About</Link>
 
-  store.fetch().then(data => {
-    res.write(`<!DOCTYPE html>
-      <html>
-        <head></head>
-        <body>
-          ${content}
-          <script>
-            window.__state = ${JSON.stringify(store.state)}
-          </script>
-          <script src="/index.js"></script>
-        </body>
-      </html>
-    `)
-    res.end()
-  })
-})
+    <Route exact path='/' component={Home} />
+    <Route path='/about' component={About} />
+  </nav>
+)
 ```
 
 MIT License
