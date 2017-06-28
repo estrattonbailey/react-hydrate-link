@@ -4,14 +4,13 @@ import { Link } from 'react-router-dom'
 import { StaticRouter } from 'react-router'
 
 import { Tap } from 'react-hydrate'
-import { renderToString } from 'react-dom/server'
+import { render } from 'react-dom'
 
 export default class AsyncLink extends Link {
   static contextTypes = {
     hydrate: PropTypes.shape({
       store: PropTypes.shape({
-        fetch: PropTypes.func.isRequired,
-        setState: PropTypes.func.isRequired
+        fetch: PropTypes.func.isRequired
       }),
       root: PropTypes.object.isRequired,
       hydrateStore: PropTypes.func.isRequired
@@ -35,13 +34,13 @@ export default class AsyncLink extends Link {
 
     mutatedPathname = href
 
-    renderToString(
+    render((
       <StaticRouter location={href} context={ctx}>
         <Tap hydrate={store}>
           {Root}
         </Tap>
       </StaticRouter>
-    )
+    ), document.createElement('div'))
 
     if (ctx.url) {
       return this.prefetch(ctx.url)
