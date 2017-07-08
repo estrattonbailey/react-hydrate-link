@@ -1,21 +1,35 @@
 # react-hydrate-link
-An extension for react-router v4 projects that prefetches data for the next view before completing navigation. Requires [react-hydrate](https://github.com/estrattonbailey/react-hydrate).
+A companion to [react-hydrate](https://github.com/estrattonbailey/react-hydrate) that prefetches data dependencies for the next route, given a [react-router](https://github.com/ReactTraining/react-router) context.
+
+In a nutshell, this library, together with `react-hydrate`, ensures that all data has loaded *before* rendering the next route. No flashing loading state needed.
 
 [![js-standard-style](https://cdn.rawgit.com/feross/standard/master/badge.svg)](http://standardjs.com)
 
-## Purpose
-Skeleton UI is great, but sometimes you need to wait to render a new view until all your data is available. react-router v4 made this slightly harder, as you can see [in this issue thread](https://github.com/ReactTraining/react-router/issues/4407#issuecomment-281819336). This library attempts to merge the co-located data (with `react-hydrate`, in this case) *and* the awesome dynamic routing we have with RRv4.
-
 ## Usage
-Assumming a `react-hydrate` setup consistent with that outlined in that library's README, when clicking the `Link` to the About page, the actual navigation will not occur until the data has resolved within the `hydrate()` connector that wraps the `About` component.
+First, you'll need `react-hydrate`. Check out that [README](https://github.com/estrattonbailey/react-hydrate) for more info.
+
+Then, just import the default export from `react-hydrate-link` and use in place of the `Link` export from `react-router`.
+
+```javascript
+// instead of this
+import { Link } from 'react-router-dom'
+
+// use this
+import Link from 'react-hydrate-link'
+```
+
+That's it!
+
+## How it works
+`react-hydrate` basically lifts data dependencies outside of your React app, resolves them asynchronously, and injects the data back in for you to handle as you will. What this library does is run a quick *blind render* over the next route's AST to cache your data in memory before navigation. That way, the next route loads immediately.
+
+In the example below, when clicking the `Link` to the About page, the actual navigation will not occur until the data has resolved within the `hydrate()` connector that wraps the `About` component.
 ```javascript
 import Link from 'react-hydrate-link'
 
 /**
  * About.js
  */
-import { hydrate } from 'react-hydrate'
-
 export default hydrate(
   props => new Promise((resolve, reject) => {
     setTimeout(() => {
@@ -35,28 +49,17 @@ export default hydrate(
 ))
 
 /**
- * Home.js
- */
-export default props => (
-  <div>
-    <h1>Home</h1>
-    <p>This is the home page. This data was loaded synchronously.</p>
-  </div>
-)
-
-/**
  * index.js
  */
+import Link from 'react-hydrate-link'
+
 export default props => (
   <nav>
-    <Link to="/home">Home</Link>
     <Link to="/about">About</Link>
 
-    <Route exact path='/' component={Home} />
     <Route path='/about' component={About} />
   </nav>
 )
 ```
 
 MIT License
-
