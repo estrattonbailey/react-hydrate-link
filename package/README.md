@@ -1,5 +1,5 @@
 # react-hydrate-link
-A companion to [react-hydrate](https://github.com/estrattonbailey/react-hydrate) and extension of [react-router](https://github.com/ReactTraining/react-router) that prefetches data dependencies for the next route, given a `react-router` context.
+A companion to [react-hydrate](https://github.com/estrattonbailey/react-hydrate) and extension of [react-router](https://github.com/ReactTraining/react-router) that prefetches data dependencies for the next route, given a `react-router` context. **1.2kb gzipped.**
 
 In a nutshell, this library, together with `react-hydrate`, ensures that all data has loaded *before* rendering the next route. No flashing loading state needed.
 
