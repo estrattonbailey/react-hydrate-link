@@ -2,15 +2,14 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import { Link } from 'react-router-dom'
 import { StaticRouter } from 'react-router'
-
 import { Tap } from 'react-hydrate'
-import { render } from 'react-dom'
+import { asyncRender } from 'react-hydrate/dist/server'
 
 export default class AsyncLink extends Link {
   static contextTypes = {
     hydrate: PropTypes.shape({
       store: PropTypes.shape({
-        fetch: PropTypes.func.isRequired
+        getState: PropTypes.func.isRequired
       }),
       root: PropTypes.object.isRequired,
       hydrateStore: PropTypes.func.isRequired
@@ -34,19 +33,19 @@ export default class AsyncLink extends Link {
 
     mutatedPathname = href
 
-    render((
+    return asyncRender((
       <StaticRouter location={href} context={ctx}>
         <Tap hydrate={store}>
           {Root}
         </Tap>
       </StaticRouter>
-    ), document.createElement('div'))
+    )).then(() => {
+      if (ctx.url) {
+        return this.prefetch(ctx.url)
+      }
 
-    if (ctx.url) {
-      return this.prefetch(ctx.url)
-    }
-
-    return store.fetch().then(state => hydrateStore(store))
+      return hydrateStore(store.getState())
+    })
   }
 
   render () {
